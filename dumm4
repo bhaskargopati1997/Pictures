@@ -1,0 +1,15 @@
+@patch('builtins.open', new_callable=mock_open, read_data=config_data)
+@patch('src.lambda_handler.check_mandatory_jobs_success', return_value=(False, [], [], []))
+@patch('src.lambda_handler.check_optional_jobs_status', return_value=(False, [], [], []))
+@patch('src.lambda_handler.trigger_step_function')
+@patch('src.lambda_handler.cleanup_cloudwatch_rule')
+def test_lambda_handler_failure(mock_file, mock_mandatory, mock_optional, mock_trigger, mock_cleanup):
+    event = {}
+    context = MagicMock()
+    context.invoked_function_arn = "arn:aws:lambda:region:account-id:function:function-name"
+
+    response = lambda_handler(event, context)
+    body = response['body']
+    
+    assert response['statusCode'] == 500
+    assert body['status'] == "fail"
